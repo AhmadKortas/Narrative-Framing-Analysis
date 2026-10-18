@@ -1,14 +1,7 @@
 """
-narrative_framing_analysis.py
 =============================================================================
 Analysis of narrative framing in Arabic discrimination/racism discourse on
 Facebook, and how audiences react to each frame.
-
-This script reproduces the framing results (RQ2) and the audience-response
-results (RQ3) reported in the paper, and regenerates every figure and table
-in those two sections. It works from the FANAR-annotated post files: two
-10k batches that overlap slightly, so the first thing we do is merge them
-and drop the duplicates, which leaves 19,299 unique posts.
 
 What it produces, in order:
   1. The frame distribution (how often each of the six frames occurs)
@@ -94,8 +87,17 @@ def load_file(path):
 
 
 def as_number(series):
-    """Turn a text column into numbers, treating anything unparseable as 0."""
-    return pd.to_numeric(series, errors="coerce").fillna(0)
+    """
+    Turn a text column into numbers, treating anything unparseable as 0.
+
+    CrowdTangle CSV exports write large counts with thousands separators
+    ("1,406"), which pd.to_numeric cannot parse and would coerce to NaN -> 0,
+    silently zeroing exactly the highest-engagement posts and dragging every
+    mean, median, and percentile downward. We strip the commas first so those
+    values survive.
+    """
+    cleaned = series.astype(str).str.replace(",", "", regex=False).str.strip()
+    return pd.to_numeric(cleaned, errors="coerce").fillna(0)
 
 
 def post_key(df):
